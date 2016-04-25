@@ -1,0 +1,23 @@
+package com.wix.pay.mercurypay.model
+
+case class AuthorizeOrSaleResponse(ResponseOrigin: String = null,
+                                   DSIXReturnCode: String = null,
+                                   CmdStatus: String = null,
+                                   TextResponse: String = null,
+                                   UserTraceData: String = null,
+                                   MerchantID : String = null,
+                                   AcctNo : String = null,
+                                   ExpDate : String = null,
+                                   CardType : String = null,
+                                   TranCode : String = null,
+                                   AuthCode : String = null,
+                                   InvoiceNo : String = null,
+                                   AVSResult : String = null,
+                                   CVVResult : String = null,
+                                   OperatorID : String = null,
+                                   Memo : String = null,
+                                   Purchase : String = null,
+                                   Authorize : String = null,
+                                   AcqRefData : String = null,
+                                   RecordNo : String = null,
+                                   ProcessData : String = null) extends Response
