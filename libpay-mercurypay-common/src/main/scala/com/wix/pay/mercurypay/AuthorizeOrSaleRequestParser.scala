@@ -4,7 +4,7 @@ import com.wix.pay.mercurypay.model.AuthorizeOrSaleRequest
 import org.json4s.DefaultFormats
 import org.json4s.native.Serialization
 
-class AuthorizeOrSaleRequestParser {
+object AuthorizeOrSaleRequestParser {
   private implicit val formats = DefaultFormats
 
   def parse(str: String): AuthorizeOrSaleRequest = {

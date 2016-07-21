@@ -1,15 +1,5 @@
 package com.wix.pay.mercurypay.model
 
-object AccountSources {
-  val SWIPED = "Swiped"
-  val KEYED = "Keyed"
-  val CONTACTLESS = "Contactless"
-}
-
-object Frequencies {
-  val ONETIME = "OneTime"
-  val RECURRING = "Recurring"
-}
 
 case class AuthorizeOrSaleRequest(InvoiceNo: String = null,
                                   RefNo: String = null,

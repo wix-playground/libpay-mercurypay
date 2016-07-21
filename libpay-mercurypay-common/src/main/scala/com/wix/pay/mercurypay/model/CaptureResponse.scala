@@ -1,24 +1,20 @@
 package com.wix.pay.mercurypay.model
 
-object CaptureStatuses {
-  val CAPTURED = "Captured"
-}
-
-case class CaptureResponse(ResponseOrigin: String = null,
-                           DSIXReturnCode: String = null,
-                           CmdStatus: String = null,
-                           TextResponse: String = null,
-                           UserTraceData: String = null,
-                           MerchantID: String = null,
-                           AcctNo: String = null,
-                           ExpDate: String = null,
-                           CardType: String = null,
-                           TranCode: String = null,
-                           AuthCode: String = null,
-                           CaptureStatus: String = null,
-                           RefNo: String = null,
-                           InvoiceNo: String = null,
-                           Purchase: String = null,
-                           Authorize: String = null,
-                           AcqRefData: String = null,
-                           ProcessData: String = null) extends Response
+case class CaptureResponse(ResponseOrigin: Option[String] = None,
+                           DSIXReturnCode: Option[String] = None,
+                           CmdStatus: Option[String] = None,
+                           TextResponse: Option[String] = None,
+                           UserTraceData: Option[String] = None,
+                           MerchantID: Option[String] = None,
+                           AcctNo: Option[String] = None,
+                           ExpDate: Option[String] = None,
+                           CardType: Option[String] = None,
+                           TranCode: Option[String] = None,
+                           AuthCode: Option[String] = None,
+                           CaptureStatus: Option[String] = None,
+                           RefNo: Option[String] = None,
+                           InvoiceNo: Option[String] = None,
+                           Purchase: Option[String] = None,
+                           Authorize: Option[String] = None,
+                           AcqRefData: Option[String] = None,
+                           ProcessData: Option[String] = None) extends Response

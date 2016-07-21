@@ -12,8 +12,8 @@ object MercurypayHelper {
       InvoiceNo = invoiceId,
       RefNo = "0001", // placeholder, per MercuryPay documentation
       Memo = posNameAndVersion,
-      Frequency = Frequencies.ONETIME,
-      AccountSource = AccountSources.KEYED,
+      Frequency = Frequencies.onetime,
+      AccountSource = AccountSources.keyed,
       Purchase = toMercurypayAmount(currencyAmount.amount),
       AcctNo = creditCard.number,
       ExpDate = toMercurypayYearMonth(
@@ -30,8 +30,8 @@ object MercurypayHelper {
       InvoiceNo = invoiceId,
       RefNo = "0001", // placeholder, per MercuryPay documentation
       Memo = posNameAndVersion,
-      Frequency = Frequencies.ONETIME,
-      AccountSource = AccountSources.KEYED,
+      Frequency = Frequencies.onetime,
+      AccountSource = AccountSources.keyed,
       Purchase = toMercurypayAmount(currencyAmount.amount),
       Authorize = toMercurypayAmount(currencyAmount.amount),
       AcctNo = creditCard.number,

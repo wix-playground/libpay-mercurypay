@@ -5,5 +5,4 @@ case class MercurypayAuthorization(invoiceNo: String,
                                    expDate: String,
                                    authCode: String,
                                    acqRefData: String,
-                                   authorize: String,
-                                   tranCode: String)
+                                   authorize: String)

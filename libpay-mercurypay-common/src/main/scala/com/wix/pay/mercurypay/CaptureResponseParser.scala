@@ -4,7 +4,7 @@ import com.wix.pay.mercurypay.model.CaptureResponse
 import org.json4s.DefaultFormats
 import org.json4s.native.Serialization
 
-class CaptureResponseParser {
+object CaptureResponseParser {
   private implicit val formats = DefaultFormats
 
   def parse(str: String): CaptureResponse = {

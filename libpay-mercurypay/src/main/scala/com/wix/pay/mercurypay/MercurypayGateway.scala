@@ -24,11 +24,6 @@ class MercurypayGateway(requestFactory: HttpRequestFactory,
                         posNameAndVersion: String,
                         merchantParser: MercurypayMerchantParser = new JsonMercurypayMerchantParser,
                         authorizationParser: MercurypayAuthorizationParser = new JsonMercurypayAuthorizationParser) extends PaymentGateway {
-  private val authorizeOrSaleRequestParser = new AuthorizeOrSaleRequestParser
-  private val authorizeOrSaleResponseParser = new AuthorizeOrSaleResponseParser
-  private val captureRequestParser = new CaptureRequestParser
-  private val captureResponseParser = new CaptureResponseParser
-
   override def authorize(merchantKey: String, creditCard: CreditCard, currencyAmount: CurrencyAmount, customer: Option[Customer], deal: Option[Deal]): Try[String] = {
     Try {
       require(deal.isDefined, "Deal is mandatory for MercuryPay")
@@ -38,20 +33,19 @@ class MercurypayGateway(requestFactory: HttpRequestFactory,
       val merchant = merchantParser.parse(merchantKey)
 
       val request = MercurypayHelper.createAuthorizeRequest(posNameAndVersion, deal.get.invoiceId.get, creditCard, currencyAmount)
-      val requestJson = authorizeOrSaleRequestParser.stringify(request)
+      val requestJson = AuthorizeOrSaleRequestParser.stringify(request)
       val responseJson = doJsonRequest("Credit/PreAuth", merchant.merchantId, merchant.password, requestJson)
-      val response = authorizeOrSaleResponseParser.parse(responseJson)
+      val response = AuthorizeOrSaleResponseParser.parse(responseJson)
 
       verifyResponse(response)
 
       val authorization = MercurypayAuthorization(
-        invoiceNo = response.InvoiceNo,
-        acctNo = response.AcctNo,
-        expDate = response.ExpDate,
-        authCode = response.AuthCode,
-        acqRefData = response.AcqRefData,
-        authorize = response.Authorize,
-        tranCode = response.TranCode
+        invoiceNo = response.InvoiceNo.get,
+        acctNo = response.AcctNo.get,
+        expDate = response.ExpDate.get,
+        authCode = response.AuthCode.get,
+        acqRefData = response.AcqRefData.get,
+        authorize = response.Authorize.get
       )
       authorizationParser.stringify(authorization)
     } match {
@@ -74,18 +68,18 @@ class MercurypayGateway(requestFactory: HttpRequestFactory,
         authCode = authorization.authCode,
         acqRefData = authorization.acqRefData,
         amount = amount)
-      val requestJson = captureRequestParser.stringify(request)
+      val requestJson = CaptureRequestParser.stringify(request)
       val responseJson = doJsonRequest("Credit/PreAuthCapture", merchant.merchantId, merchant.password, requestJson)
-      val response = captureResponseParser.parse(responseJson)
+      val response = CaptureResponseParser.parse(responseJson)
 
       verifyResponse(response)
-      if (response.CaptureStatus != CaptureStatuses.CAPTURED) {
-        throw new PaymentRejectedException(s"${response.TextResponse} (CaptureStatus=${response.CaptureStatus})")
+      if (response.CaptureStatus.get != CaptureStatuses.captured) {
+        throw new PaymentRejectedException(s"${response.TextResponse.get} (CaptureStatus=${response.CaptureStatus.get})")
       }
 
-      response.TranCode
+      response.RefNo.get
     } match {
-      case Success(numTrans) => Success(numTrans)
+      case Success(transactionId) => Success(transactionId)
       case Failure(e: PaymentException) => Failure(e)
       case Failure(e) => Failure(new PaymentErrorException(e.getMessage, e))
     }
@@ -100,13 +94,13 @@ class MercurypayGateway(requestFactory: HttpRequestFactory,
       val merchant = merchantParser.parse(merchantKey)
 
       val request = MercurypayHelper.createSaleRequest(posNameAndVersion, deal.get.invoiceId.get, creditCard, currencyAmount)
-      val requestJson = authorizeOrSaleRequestParser.stringify(request)
+      val requestJson = AuthorizeOrSaleRequestParser.stringify(request)
       val responseJson = doJsonRequest("Credit/Sale", merchant.merchantId, merchant.password, requestJson)
-      val response = authorizeOrSaleResponseParser.parse(responseJson)
+      val response = AuthorizeOrSaleResponseParser.parse(responseJson)
 
       verifyResponse(response)
 
-      response.TranCode
+      response.RefNo.get
     } match {
       case Success(transactionId) => Success(transactionId)
       case Failure(e: PaymentException) => Failure(e)
@@ -116,19 +110,18 @@ class MercurypayGateway(requestFactory: HttpRequestFactory,
 
   override def voidAuthorization(merchantKey: String, authorizationKey: String): Try[String] = {
     Try {
-      // It's unclear whether voiding an authorization is supported, or we just need to wait it out.
-      // There's a VoidSale request, but documentation says it's only for captured transactions.
+      // TODO: implement "Reversal Request" using VoidSale
       val authorization = authorizationParser.parse(authorizationKey)
-      authorization.tranCode
+      "" // TODO: use response's RefNo
     }
   }
 
   private def verifyResponse(response: Response): Unit = {
-    response.CmdStatus match {
-      case CmdStatuses.ERROR => throw new PaymentErrorException(s"${response.DSIXReturnCode}|${response.TextResponse}")
-      case CmdStatuses.DECLINED => throw new PaymentRejectedException(s"${response.TextResponse} (CmdStatus=${response.CmdStatus})")
-      case CmdStatuses.APPROVED => // Nothing to do
-      case _ => throw new PaymentErrorException(s"Unexpected CmdStatus=${response.CmdStatus}")
+    response.CmdStatus.get match {
+      case CmdStatuses.error => throw new PaymentErrorException(s"${response.DSIXReturnCode.get}|${response.TextResponse.get}")
+      case CmdStatuses.declined => throw new PaymentRejectedException(s"${response.TextResponse.get} (CmdStatus=${CmdStatuses.declined})")
+      case CmdStatuses.approved => // Nothing to do
+      case otherCmdStatus => throw new PaymentErrorException(s"Unexpected CmdStatus=$otherCmdStatus")
     }
   }
 

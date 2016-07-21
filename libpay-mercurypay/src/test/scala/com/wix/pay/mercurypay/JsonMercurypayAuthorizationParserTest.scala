@@ -1,9 +1,9 @@
 package com.wix.pay.mercurypay
 
 
+import com.wix.pay.mercurypay.MercurypayMatchers._
 import org.specs2.mutable.SpecWithJUnit
 import org.specs2.specification.Scope
-import com.wix.pay.mercurypay.MercurypayMatchers._
 
 
 class JsonMercurypayAuthorizationParserTest extends SpecWithJUnit {
@@ -19,8 +19,7 @@ class JsonMercurypayAuthorizationParserTest extends SpecWithJUnit {
         expDate = "some expDate",
         authCode = "some authCode",
         acqRefData = "some acqRefData",
-        authorize = "some authorize",
-        tranCode = "some transaction code"
+        authorize = "some authorize"
       )
 
       val authorizationKey = authorizationParser.stringify(someAuthorization)
@@ -30,8 +29,7 @@ class JsonMercurypayAuthorizationParserTest extends SpecWithJUnit {
         expDate = ===(someAuthorization.expDate),
         authCode = ===(someAuthorization.authCode),
         acqRefData = ===(someAuthorization.acqRefData),
-        authorize = ===(someAuthorization.authorize),
-        tranCode = ===(someAuthorization.tranCode)
+        authorize = ===(someAuthorization.authorize)
       )
     }
   }

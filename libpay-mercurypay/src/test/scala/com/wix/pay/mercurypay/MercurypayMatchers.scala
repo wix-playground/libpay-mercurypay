@@ -17,8 +17,7 @@ trait MercurypayMatchers extends Matchers {
       expDate ^^ { (_: MercurypayAuthorization).expDate aka "expDate" } and
       authCode ^^ { (_: MercurypayAuthorization).authCode aka "authCode" } and
       acqRefData ^^ { (_: MercurypayAuthorization).acqRefData aka "acqRefData" } and
-      authorize ^^ { (_: MercurypayAuthorization).authorize aka "authorize" } and
-      tranCode ^^ { (_: MercurypayAuthorization).tranCode aka "tranCode" }
+      authorize ^^ { (_: MercurypayAuthorization).authorize aka "authorize" }
   }
 
   def beAuthorizationKey(authorization: Matcher[MercurypayAuthorization]): Matcher[String] = {

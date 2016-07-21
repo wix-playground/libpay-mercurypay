@@ -17,7 +17,7 @@ class MercurypayGatewayIT extends SpecWithJUnit {
 
   val driver = new MercurypayDriver(port = mercurypayPort)
   step {
-    driver.startProbe()
+    driver.start()
   }
 
   sequential
@@ -53,12 +53,11 @@ class MercurypayGatewayIT extends SpecWithJUnit {
       expDate = "some expiration date",
       authCode = "some auth code",
       acqRefData = "some acqRefData",
-      authorize = "some authorize",
-      tranCode = "some transaction code"
+      authorize = "some authorize"
     )
     val authorizationKey = authorizationParser.stringify(someAuthorization)
     val someCaptureAmount = 11.1
-    val someTransactionCode = "some transaction code"
+    val someTransactionId = "some transaction ID"
 
     val somePosNameAndVersion = "SomePos 1.3.0"
 
@@ -70,7 +69,7 @@ class MercurypayGatewayIT extends SpecWithJUnit {
       posNameAndVersion = somePosNameAndVersion
     )
 
-    driver.resetProbe()
+    driver.reset()
   }
 
   "sale request via MercuryPay gateway" should {
@@ -113,7 +112,7 @@ class MercurypayGatewayIT extends SpecWithJUnit {
         invoiceId = someDeal.invoiceId.get,
         creditCard = someCreditCard,
         currencyAmount = someCurrencyAmount
-      ) returns someTransactionCode
+      ) returns someTransactionId
 
       mercurypay.sale(
         merchantKey = merchantKey,
@@ -121,7 +120,7 @@ class MercurypayGatewayIT extends SpecWithJUnit {
         currencyAmount = someCurrencyAmount,
         deal = Some(someDeal)
       ) must beASuccessfulTry(
-        check = ===(someTransactionCode)
+        check = ===(someTransactionId)
       )
     }
   }
@@ -172,8 +171,7 @@ class MercurypayGatewayIT extends SpecWithJUnit {
         expDate = someAuthorization.expDate,
         authCode = someAuthorization.authCode,
         acqRefData = someAuthorization.acqRefData,
-        authorize = someAuthorization.authorize,
-        tranCode = someAuthorization.tranCode
+        authorize = someAuthorization.authorize
       )
 
       mercurypay.authorize(
@@ -189,8 +187,7 @@ class MercurypayGatewayIT extends SpecWithJUnit {
             expDate = ===(someAuthorization.expDate),
             authCode = ===(someAuthorization.authCode),
             acqRefData = ===(someAuthorization.acqRefData),
-            authorize = ===(someAuthorization.authorize),
-            tranCode = ===(someAuthorization.tranCode)
+            authorize = ===(someAuthorization.authorize)
           )
         )
       )
@@ -209,14 +206,14 @@ class MercurypayGatewayIT extends SpecWithJUnit {
         authCode = someAuthorization.authCode,
         acqRefData = someAuthorization.acqRefData,
         amount = someCaptureAmount
-      ) returns someTransactionCode
+      ) returns someTransactionId
 
       mercurypay.capture(
         merchantKey = merchantKey,
         authorizationKey = authorizationKey,
         amount = someCaptureAmount
       ) must beASuccessfulTry(
-        check = ===(someTransactionCode)
+        check = ===(someTransactionId)
       )
     }
   }
@@ -227,12 +224,12 @@ class MercurypayGatewayIT extends SpecWithJUnit {
         merchantKey = merchantKey,
         authorizationKey = authorizationKey
       ) must beASuccessfulTry(
-        check = ===(someAuthorization.tranCode)
+        check = ===("") // TODO: change this
       )
     }
   }
 
   step {
-    driver.stopProbe()
+    driver.stop()
   }
 }

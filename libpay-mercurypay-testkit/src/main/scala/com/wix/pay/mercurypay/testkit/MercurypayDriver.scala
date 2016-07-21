@@ -12,20 +12,15 @@ import spray.http._
 class MercurypayDriver(port: Int) {
   private val probe = new EmbeddedHttpProbe(port, EmbeddedHttpProbe.NotFoundHandler)
 
-  private val authorizeOrSaleRequestParser = new AuthorizeOrSaleRequestParser
-  private val authorizeOrSaleResponseParser = new AuthorizeOrSaleResponseParser
-  private val captureRequestParser = new CaptureRequestParser
-  private val captureResponseParser = new CaptureResponseParser
-
-  def startProbe() {
+  def start() {
     probe.doStart()
   }
 
-  def stopProbe() {
+  def stop() {
     probe.doStop()
   }
 
-  def resetProbe() {
+  def reset() {
     probe.handlers.clear()
   }
 
@@ -124,26 +119,28 @@ class MercurypayDriver(port: Int) {
                        request: AuthorizeOrSaleRequest) extends Ctx("/Credit/Sale", username, password) {
 
     protected override def verifyContent(entity: HttpEntity): Boolean = {
-      val actualRequest = authorizeOrSaleRequestParser.parse(entity.asString)
+      val actualRequest = AuthorizeOrSaleRequestParser.parse(entity.asString)
       request == actualRequest
     }
 
     private def returns(response: AuthorizeOrSaleResponse): Unit = {
-      returns(StatusCodes.OK, authorizeOrSaleResponseParser.stringify(response))
+      returns(StatusCodes.OK, AuthorizeOrSaleResponseParser.stringify(response))
     }
 
     def returns(transactionId: String): Unit = {
       val response = AuthorizeOrSaleResponse(
-        CmdStatus = CmdStatuses.APPROVED,
-        TranCode = transactionId
+        CmdStatus = Some(CmdStatuses.approved),
+        TranCode = Some(TranCodes.sale),
+        RefNo = Some(transactionId)
       )
       returns(response)
     }
 
     def isRejected(): Unit = {
       val response = AuthorizeOrSaleResponse(
-        CmdStatus = CmdStatuses.DECLINED,
-        TextResponse = "some text response"
+        CmdStatus = Some(CmdStatuses.declined),
+        TranCode = Some(TranCodes.sale),
+        TextResponse = Some("some text response")
       )
       returns(response)
     }
@@ -154,12 +151,12 @@ class MercurypayDriver(port: Int) {
                             request: AuthorizeOrSaleRequest) extends Ctx("/Credit/PreAuth", username, password) {
 
     protected override def verifyContent(entity: HttpEntity): Boolean = {
-      val actualRequest = authorizeOrSaleRequestParser.parse(entity.asString)
+      val actualRequest = AuthorizeOrSaleRequestParser.parse(entity.asString)
       request == actualRequest
     }
 
     private def returns(response: AuthorizeOrSaleResponse): Unit = {
-      returns(StatusCodes.OK, authorizeOrSaleResponseParser.stringify(response))
+      returns(StatusCodes.OK, AuthorizeOrSaleResponseParser.stringify(response))
     }
 
     def returns(invoiceNo: String,
@@ -167,25 +164,25 @@ class MercurypayDriver(port: Int) {
                 expDate: String,
                 authCode: String,
                 acqRefData: String,
-                authorize: String,
-                tranCode: String): Unit = {
+                authorize: String): Unit = {
       val response = AuthorizeOrSaleResponse(
-        CmdStatus = CmdStatuses.APPROVED,
-        InvoiceNo = invoiceNo,
-        AcctNo = acctNo,
-        ExpDate = expDate,
-        AuthCode = authCode,
-        AcqRefData = acqRefData,
-        Authorize = authorize,
-        TranCode = tranCode
+        CmdStatus = Some(CmdStatuses.approved),
+        InvoiceNo = Some(invoiceNo),
+        AcctNo = Some(acctNo),
+        ExpDate = Some(expDate),
+        AuthCode = Some(authCode),
+        AcqRefData = Some(acqRefData),
+        Authorize = Some(authorize),
+        TranCode = Some(TranCodes.preAuth)
       )
       returns(response)
     }
 
     def isRejected(): Unit = {
       val response = AuthorizeOrSaleResponse(
-        CmdStatus = CmdStatuses.DECLINED,
-        TextResponse = "some text response"
+        CmdStatus = Some(CmdStatuses.declined),
+        TranCode = Some(TranCodes.preAuth),
+        TextResponse = Some("some text response")
       )
       returns(response)
     }
@@ -196,19 +193,20 @@ class MercurypayDriver(port: Int) {
                           request: CaptureRequest) extends Ctx("/Credit/PreAuthCapture", username, password) {
 
     protected override def verifyContent(entity: HttpEntity): Boolean = {
-      val actualRequest = captureRequestParser.parse(entity.asString)
+      val actualRequest = CaptureRequestParser.parse(entity.asString)
       request == actualRequest
     }
 
     private def returns(response: CaptureResponse): Unit = {
-      returns(StatusCodes.OK, captureResponseParser.stringify(response))
+      returns(StatusCodes.OK, CaptureResponseParser.stringify(response))
     }
 
     def returns(transactionId: String): Unit = {
       val response = CaptureResponse(
-        CmdStatus = CmdStatuses.APPROVED,
-        CaptureStatus = CaptureStatuses.CAPTURED,
-        TranCode = transactionId
+        CmdStatus = Some(CmdStatuses.approved),
+        CaptureStatus = Some(CaptureStatuses.captured),
+        TranCode = Some(TranCodes.preAuthCapture),
+        RefNo = Some(transactionId)
       )
       returns(response)
     }

@@ -3,6 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>libpay-mercurypay-all</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>libpay MercuryPay payment gateway adapter aggregator</name>
     <description>libpay module for MercuryPay payment gateway</description>
