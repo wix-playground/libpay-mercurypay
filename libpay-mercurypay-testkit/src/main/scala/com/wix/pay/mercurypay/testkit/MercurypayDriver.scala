@@ -131,7 +131,8 @@ class MercurypayDriver(port: Int) {
       val response = AuthorizeOrSaleResponse(
         CmdStatus = Some(CmdStatuses.approved),
         TranCode = Some(TranCodes.sale),
-        RefNo = Some(transactionId)
+        RefNo = Some(transactionId),
+        OperatorID = Some(null) // Just to test null value deserialization
       )
       returns(response)
     }
