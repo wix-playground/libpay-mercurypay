@@ -51,7 +51,7 @@ class MercurypayGateway(requestFactory: HttpRequestFactory,
     } match {
       case Success(authorizationKey) => Success(authorizationKey)
       case Failure(e: PaymentException) => Failure(e)
-      case Failure(e) => Failure(new PaymentErrorException(e.getMessage, e))
+      case Failure(e) => Failure(PaymentErrorException(e.getMessage, e))
     }
   }
 
@@ -74,14 +74,14 @@ class MercurypayGateway(requestFactory: HttpRequestFactory,
 
       verifyResponse(response)
       if (response.CaptureStatus.get != CaptureStatuses.captured) {
-        throw new PaymentRejectedException(s"${response.TextResponse.get} (CaptureStatus=${response.CaptureStatus.get})")
+        throw PaymentRejectedException(s"${response.TextResponse.get} (CaptureStatus=${response.CaptureStatus.get})")
       }
 
       response.RefNo.get
     } match {
       case Success(transactionId) => Success(transactionId)
       case Failure(e: PaymentException) => Failure(e)
-      case Failure(e) => Failure(new PaymentErrorException(e.getMessage, e))
+      case Failure(e) => Failure(PaymentErrorException(e.getMessage, e))
     }
   }
 
@@ -104,7 +104,7 @@ class MercurypayGateway(requestFactory: HttpRequestFactory,
     } match {
       case Success(transactionId) => Success(transactionId)
       case Failure(e: PaymentException) => Failure(e)
-      case Failure(e) => Failure(new PaymentErrorException(e.getMessage, e))
+      case Failure(e) => Failure(PaymentErrorException(e.getMessage, e))
     }
   }
 
@@ -118,10 +118,10 @@ class MercurypayGateway(requestFactory: HttpRequestFactory,
 
   private def verifyResponse(response: Response): Unit = {
     response.CmdStatus.get match {
-      case CmdStatuses.error => throw new PaymentErrorException(s"${response.DSIXReturnCode.get}|${response.TextResponse.get}")
-      case CmdStatuses.declined => throw new PaymentRejectedException(s"${response.TextResponse.get} (CmdStatus=${CmdStatuses.declined})")
+      case CmdStatuses.error => throw PaymentErrorException(s"${response.DSIXReturnCode.get}|${response.TextResponse.get}")
+      case CmdStatuses.declined => throw PaymentRejectedException(s"${response.TextResponse.get} (CmdStatus=${CmdStatuses.declined})")
       case CmdStatuses.approved => // Nothing to do
-      case otherCmdStatus => throw new PaymentErrorException(s"Unexpected CmdStatus=$otherCmdStatus")
+      case otherCmdStatus => throw PaymentErrorException(s"Unexpected CmdStatus=$otherCmdStatus")
     }
   }
 
