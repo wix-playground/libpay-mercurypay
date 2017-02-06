@@ -6,7 +6,7 @@ import com.wix.pay.creditcard.{CreditCard, CreditCardOptionalFields, YearMonth}
 import com.wix.pay.mercurypay.MercurypayMatchers._
 import com.wix.pay.mercurypay._
 import com.wix.pay.mercurypay.testkit.MercurypayDriver
-import com.wix.pay.model.{CurrencyAmount, Deal}
+import com.wix.pay.model.{CurrencyAmount, Deal, Payment}
 import com.wix.pay.{PaymentErrorException, PaymentGateway, PaymentRejectedException}
 import org.specs2.mutable.SpecWithJUnit
 import org.specs2.specification.Scope
@@ -31,6 +31,7 @@ class MercurypayGatewayIT extends SpecWithJUnit {
     val merchantKey = merchantParser.stringify(someMerchant)
 
     val someCurrencyAmount = CurrencyAmount("USD", 33.3)
+    val somePayment = Payment(someCurrencyAmount, 1)
     val someAdditionalFields = CreditCardOptionalFields.withFields(
       csc = Some("123"),
       billingAddress = Some("some billing address"),
@@ -77,7 +78,7 @@ class MercurypayGatewayIT extends SpecWithJUnit {
       mercurypay.sale(
         merchantKey = merchantKey,
         creditCard = someCreditCard,
-        currencyAmount = someCurrencyAmount,
+        payment = somePayment,
         deal = None
       ) must beAFailedTry(
         check = beAnInstanceOf[PaymentErrorException]
@@ -97,7 +98,7 @@ class MercurypayGatewayIT extends SpecWithJUnit {
       mercurypay.sale(
         merchantKey = merchantKey,
         creditCard = someCreditCard,
-        currencyAmount = someCurrencyAmount,
+        payment = somePayment,
         deal = Some(someDeal)
       ) must beAFailedTry(
         check = beAnInstanceOf[PaymentRejectedException]
@@ -117,7 +118,7 @@ class MercurypayGatewayIT extends SpecWithJUnit {
       mercurypay.sale(
         merchantKey = merchantKey,
         creditCard = someCreditCard,
-        currencyAmount = someCurrencyAmount,
+        payment = somePayment,
         deal = Some(someDeal)
       ) must beASuccessfulTry(
         check = ===(someTransactionId)
@@ -130,7 +131,7 @@ class MercurypayGatewayIT extends SpecWithJUnit {
       mercurypay.authorize(
         merchantKey = merchantKey,
         creditCard = someCreditCard,
-        currencyAmount = someCurrencyAmount,
+        payment = somePayment,
         deal = None
       ) must beAFailedTry(
         check = beAnInstanceOf[PaymentErrorException]
@@ -150,7 +151,7 @@ class MercurypayGatewayIT extends SpecWithJUnit {
       mercurypay.authorize(
         merchantKey = merchantKey,
         creditCard = someCreditCard,
-        currencyAmount = someCurrencyAmount,
+        payment = somePayment,
         deal = Some(someDeal)
       ) must beAFailedTry(
         check = beAnInstanceOf[PaymentRejectedException]
@@ -177,7 +178,7 @@ class MercurypayGatewayIT extends SpecWithJUnit {
       mercurypay.authorize(
         merchantKey = merchantKey,
         creditCard = someCreditCard,
-        currencyAmount = someCurrencyAmount,
+        payment = somePayment,
         deal = Some(someDeal)
       ) must beASuccessfulTry(
         check = beAuthorizationKey(
