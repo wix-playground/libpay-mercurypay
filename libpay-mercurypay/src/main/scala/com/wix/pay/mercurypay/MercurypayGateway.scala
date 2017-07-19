@@ -24,15 +24,16 @@ class MercurypayGateway(requestFactory: HttpRequestFactory,
                         posNameAndVersion: String,
                         merchantParser: MercurypayMerchantParser = new JsonMercurypayMerchantParser,
                         authorizationParser: MercurypayAuthorizationParser = new JsonMercurypayAuthorizationParser) extends PaymentGateway {
-  override def authorize(merchantKey: String, creditCard: CreditCard, currencyAmount: CurrencyAmount, customer: Option[Customer], deal: Option[Deal]): Try[String] = {
+  override def authorize(merchantKey: String, creditCard: CreditCard, payment: Payment, customer: Option[Customer], deal: Option[Deal]): Try[String] = {
     Try {
       require(deal.isDefined, "Deal is mandatory for MercuryPay")
       require(deal.get.invoiceId.isDefined, "Deal.invoiceId is mandatory for MercuryPay")
-      require(currencyAmount.currency == "USD", s"MercuryPay doesn't support ${currencyAmount.currency}")
+      require(payment.currencyAmount.currency == "USD", s"MercuryPay doesn't support ${payment.currencyAmount.currency}")
+      require(payment.installments == 1, "MercuryPay does not support installments")
 
       val merchant = merchantParser.parse(merchantKey)
 
-      val request = MercurypayHelper.createAuthorizeRequest(posNameAndVersion, deal.get.invoiceId.get, creditCard, currencyAmount)
+      val request = MercurypayHelper.createAuthorizeRequest(posNameAndVersion, deal.get.invoiceId.get, creditCard, payment.currencyAmount)
       val requestJson = AuthorizeOrSaleRequestParser.stringify(request)
       val responseJson = doJsonRequest("Credit/PreAuth", merchant.merchantId, merchant.password, requestJson)
       val response = AuthorizeOrSaleResponseParser.parse(responseJson)
@@ -85,15 +86,16 @@ class MercurypayGateway(requestFactory: HttpRequestFactory,
     }
   }
 
-  override def sale(merchantKey: String, creditCard: CreditCard, currencyAmount: CurrencyAmount, customer: Option[Customer], deal: Option[Deal]): Try[String] = {
+  override def sale(merchantKey: String, creditCard: CreditCard, payment: Payment, customer: Option[Customer], deal: Option[Deal]): Try[String] = {
     Try {
       require(deal.isDefined, "Deal is mandatory for MercuryPay")
       require(deal.get.invoiceId.isDefined, "Deal.invoiceId is mandatory for MercuryPay")
-      require(currencyAmount.currency == "USD", s"MercuryPay doesn't support ${currencyAmount.currency}")
+      require(payment.currencyAmount.currency == "USD", s"MercuryPay doesn't support ${payment.currencyAmount.currency}")
+      require(payment.installments == 1, "MercuryPay does not support installments")
 
       val merchant = merchantParser.parse(merchantKey)
 
-      val request = MercurypayHelper.createSaleRequest(posNameAndVersion, deal.get.invoiceId.get, creditCard, currencyAmount)
+      val request = MercurypayHelper.createSaleRequest(posNameAndVersion, deal.get.invoiceId.get, creditCard, payment.currencyAmount)
       val requestJson = AuthorizeOrSaleRequestParser.stringify(request)
       val responseJson = doJsonRequest("Credit/Sale", merchant.merchantId, merchant.password, requestJson)
       val response = AuthorizeOrSaleResponseParser.parse(responseJson)
