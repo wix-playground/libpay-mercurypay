@@ -93,7 +93,7 @@ class MercurypayGatewayIT extends SpecWithJUnit {
         invoiceId = someDeal.invoiceId.get,
         creditCard = someCreditCard,
         currencyAmount = someCurrencyAmount
-      ) isRejected()
+      ) getsRejected()
 
       mercurypay.sale(
         merchantKey = merchantKey,
@@ -146,7 +146,7 @@ class MercurypayGatewayIT extends SpecWithJUnit {
         invoiceId = someDeal.invoiceId.get,
         creditCard = someCreditCard,
         currencyAmount = someCurrencyAmount
-      ) isRejected()
+      ) getsRejected()
 
       mercurypay.authorize(
         merchantKey = merchantKey,

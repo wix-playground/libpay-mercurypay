@@ -1,28 +1,25 @@
 package com.wix.pay.mercurypay.testkit
 
+
+import akka.http.scaladsl.model.Uri.Path
+import akka.http.scaladsl.model._
 import com.google.api.client.util.Base64
-import com.wix.hoopoe.http.testkit.EmbeddedHttpProbe
+import com.wix.e2e.http.api.StubWebServer
+import com.wix.e2e.http.client.extractors.HttpMessageExtractors._
+import com.wix.e2e.http.server.WebServerFactory.aStubWebServer
 import com.wix.pay.creditcard.CreditCard
 import com.wix.pay.mercurypay._
 import com.wix.pay.mercurypay.model._
 import com.wix.pay.model.CurrencyAmount
-import spray.http._
 
 
 class MercurypayDriver(port: Int) {
-  private val probe = new EmbeddedHttpProbe(port, EmbeddedHttpProbe.NotFoundHandler)
+  private val server: StubWebServer = aStubWebServer.onPort(port).build
 
-  def start() {
-    probe.doStart()
-  }
+  def start(): Unit = server.start()
+  def stop(): Unit = server.stop()
+  def reset(): Unit = server.replaceWith()
 
-  def stop() {
-    probe.doStop()
-  }
-
-  def reset() {
-    probe.handlers.clear()
-  }
 
   def aSaleRequestFor(username: String,
                       password: String,
@@ -39,8 +36,7 @@ class MercurypayDriver(port: Int) {
     new SaleRequestCtx(
       username = username,
       password = password,
-      request = request
-    )
+      request = request)
   }
 
   def anAuthorizeRequestFor(username: String,
@@ -58,8 +54,7 @@ class MercurypayDriver(port: Int) {
     new AuthorizeRequestCtx(
       username = username,
       password = password,
-      request = request
-    )
+      request = request)
   }
 
   def aCaptureRequestFor(username: String,
@@ -83,16 +78,16 @@ class MercurypayDriver(port: Int) {
     new CaptureRequestCtx(
       username = username,
       password = password,
-      request = request
-    )
+      request = request)
   }
 
+
   abstract class Ctx(val resource: String, username: String, password: String) {
-    def isStubbedRequestEntity(entity: HttpEntity, headers: List[HttpHeader]): Boolean = {
+    def isStubbedRequestEntity(entity: HttpEntity, headers: Seq[HttpHeader]): Boolean = {
       isAuthorized(headers) && verifyContent(entity)
     }
 
-    private def isAuthorized(headers: List[HttpHeader]): Boolean = {
+    private def isAuthorized(headers: Seq[HttpHeader]): Boolean = {
       val expectedValue = s"Basic ${Base64.encodeBase64String(s"$username:$password".getBytes("UTF-8"))}"
       headers.exists( h => h.name == "Authorization" && h.value == expectedValue)
     }
@@ -100,26 +95,27 @@ class MercurypayDriver(port: Int) {
     protected def verifyContent(entity: HttpEntity): Boolean
 
     protected def returns(statusCode: StatusCode, responseJson: String) {
-      probe.handlers += {
+      server.appendAll {
         case HttpRequest(
-        HttpMethods.POST,
-        Uri.Path(`resource`),
-        headers,
-        entity,
-        _) if isStubbedRequestEntity(entity, headers) =>
-          HttpResponse(
-            status = statusCode,
-            entity = HttpEntity(ContentTypes.`application/json`, responseJson))
+          HttpMethods.POST,
+          Path(`resource`),
+          headers,
+          entity,
+          _) if isStubbedRequestEntity(entity, headers) =>
+            HttpResponse(
+              status = statusCode,
+              entity = HttpEntity(ContentTypes.`application/json`, responseJson))
       }
     }
   }
+
 
   class SaleRequestCtx(username: String,
                        password: String,
                        request: AuthorizeOrSaleRequest) extends Ctx("/Credit/Sale", username, password) {
 
     protected override def verifyContent(entity: HttpEntity): Boolean = {
-      val actualRequest = AuthorizeOrSaleRequestParser.parse(entity.asString)
+      val actualRequest = AuthorizeOrSaleRequestParser.parse(entity.extractAsString)
       request == actualRequest
     }
 
@@ -132,27 +128,28 @@ class MercurypayDriver(port: Int) {
         CmdStatus = Some(CmdStatuses.approved),
         TranCode = Some(TranCodes.sale),
         RefNo = Some(transactionId),
-        OperatorID = Some(null) // Just to test null value deserialization
-      )
+        OperatorID = Some(null)) // Just to test null value deserialization
+
       returns(response)
     }
 
-    def isRejected(): Unit = {
+    def getsRejected(): Unit = {
       val response = AuthorizeOrSaleResponse(
         CmdStatus = Some(CmdStatuses.declined),
         TranCode = Some(TranCodes.sale),
-        TextResponse = Some("some text response")
-      )
+        TextResponse = Some("some text response"))
+
       returns(response)
     }
   }
+
 
   class AuthorizeRequestCtx(username: String,
                             password: String,
                             request: AuthorizeOrSaleRequest) extends Ctx("/Credit/PreAuth", username, password) {
 
     protected override def verifyContent(entity: HttpEntity): Boolean = {
-      val actualRequest = AuthorizeOrSaleRequestParser.parse(entity.asString)
+      val actualRequest = AuthorizeOrSaleRequestParser.parse(entity.extractAsString)
       request == actualRequest
     }
 
@@ -174,27 +171,28 @@ class MercurypayDriver(port: Int) {
         AuthCode = Some(authCode),
         AcqRefData = Some(acqRefData),
         Authorize = Some(authorize),
-        TranCode = Some(TranCodes.preAuth)
-      )
+        TranCode = Some(TranCodes.preAuth))
+
       returns(response)
     }
 
-    def isRejected(): Unit = {
+    def getsRejected(): Unit = {
       val response = AuthorizeOrSaleResponse(
         CmdStatus = Some(CmdStatuses.declined),
         TranCode = Some(TranCodes.preAuth),
-        TextResponse = Some("some text response")
-      )
+        TextResponse = Some("some text response"))
+
       returns(response)
     }
   }
+
 
   class CaptureRequestCtx(username: String,
                           password: String,
                           request: CaptureRequest) extends Ctx("/Credit/PreAuthCapture", username, password) {
 
     protected override def verifyContent(entity: HttpEntity): Boolean = {
-      val actualRequest = CaptureRequestParser.parse(entity.asString)
+      val actualRequest = CaptureRequestParser.parse(entity.extractAsString)
       request == actualRequest
     }
 
@@ -207,8 +205,8 @@ class MercurypayDriver(port: Int) {
         CmdStatus = Some(CmdStatuses.approved),
         CaptureStatus = Some(CaptureStatuses.captured),
         TranCode = Some(TranCodes.preAuthCapture),
-        RefNo = Some(transactionId)
-      )
+        RefNo = Some(transactionId))
+
       returns(response)
     }
   }
